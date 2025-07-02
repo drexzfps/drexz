@@ -1,91 +1,52 @@
---// HITBOX MÉDIO (5x) COM INTERFACE MÓVEL
---// Apenas para testes autorizados
+-- Cria a interface
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "HitboxInterface"
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Cria a hitbox
+local hitbox = Instance.new("Frame", gui)
+hitbox.Name = "HITBOX_DREXZ"
+hitbox.Size = UDim2.new(0, 100, 0, 100) -- 10x10 (tamanho médio)
+hitbox.Position = UDim2.new(0.5, -50, 0.5, -50) -- centro da tela
+hitbox.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- vermelho
+hitbox.BackgroundTransparency = 0.5
+hitbox.BorderSizePixel = 2
+hitbox.Active = true
+hitbox.Draggable = true
 
--- Criar GUI
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-ScreenGui.Name = "HitboxGui"
-ScreenGui.ResetOnSpawn = false
+-- Texto identificando a hitbox
+local label = Instance.new("TextLabel", hitbox)
+label.Size = UDim2.new(1, 0, 0, 20)
+label.Position = UDim2.new(0, 0, 0, -20)
+label.Text = "HITBOX DREXZ"
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.new(1, 1, 1)
+label.Font = Enum.Font.SourceSansBold
+label.TextSize = 14
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 200, 0, 60)
-Frame.Position = UDim2.new(0, 100, 0, 100)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Frame.Active = true
-Frame.Draggable = true
+-- Função para detectar se algum jogador está dentro da hitbox (simples)
+local function checkHit()
+	for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+		if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local root = otherPlayer.Character.HumanoidRootPart
+			local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(root.Position)
 
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1, 0, 0.5, 0)
-Title.Text = "HITBOX TEST"
-Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 20
+			if onScreen then
+				local x, y = screenPos.X, screenPos.Y
+				local guiPos = hitbox.AbsolutePosition
+				local guiSize = hitbox.AbsoluteSize
 
-local Toggle = Instance.new("TextButton", Frame)
-Toggle.Size = UDim2.new(1, 0, 0.5, 0)
-Toggle.Position = UDim2.new(0, 0, 0.5, 0)
-Toggle.Text = "Ativar Hitbox"
-Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-Toggle.Font = Enum.Font.SourceSansBold
-Toggle.TextSize = 18
-
--- Variáveis
-local HitboxAtivo = false
-local TamanhoHitbox = Vector3.new(5, 5, 5) -- Tamanho médio
-
--- Função para aplicar hitbox em outros jogadores
-local function AplicarHitbox(jogador)
-    if jogador == LocalPlayer then return end
-    jogador.CharacterAdded:Connect(function(char)
-        wait(1)
-        local hrp = char:WaitForChild("HumanoidRootPart", 5)
-        if hrp and HitboxAtivo then
-            hrp.Size = TamanhoHitbox
-            hrp.Transparency = 0.7
-            hrp.BrickColor = BrickColor.new("Really red")
-            hrp.Material = Enum.Material.ForceField
-            hrp.CanCollide = false
-        end
-    end)
+				if x >= guiPos.X and x <= guiPos.X + guiSize.X and
+				   y >= guiPos.Y and y <= guiPos.Y + guiSize.Y then
+					print("Jogador detectado na HITBOX DREXZ: " .. otherPlayer.Name)
+				end
+			end
+		end
+	end
 end
 
--- Ativar/desativar função
-local function AlternarHitbox()
-    HitboxAtivo = not HitboxAtivo
-    Toggle.Text = HitboxAtivo and "Desativar Hitbox" or "Ativar Hitbox"
-    Toggle.BackgroundColor3 = HitboxAtivo and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
-
-    for _, jogador in pairs(Players:GetPlayers()) do
-        if jogador ~= LocalPlayer and jogador.Character then
-            local hrp = jogador.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                if HitboxAtivo then
-                    hrp.Size = TamanhoHitbox
-                    hrp.Transparency = 0.7
-                    hrp.BrickColor = BrickColor.new("Really red")
-                    hrp.Material = Enum.Material.ForceField
-                    hrp.CanCollide = false
-                else
-                    hrp.Size = Vector3.new(2, 2, 1) -- Tamanho padrão
-                    hrp.Transparency = 1
-                    hrp.Material = Enum.Material.Plastic
-                end
-            end
-        end
-    end
+-- Checa repetidamente a cada segundo
+while true do
+	checkHit()
+	wait(1)
 end
-
--- Conectar botão
-Toggle.MouseButton1Click:Connect(AlternarHitbox)
-
--- Aplicar aos jogadores atuais
-for _, plr in pairs(Players:GetPlayers()) do
-    AplicarHitbox(plr)
-end
-
--- Aplicar aos novos jogadores
-Players.PlayerAdded:Connect(AplicarHitbox)
