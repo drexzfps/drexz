@@ -1,52 +1,66 @@
--- Cria a interface
+-- CONFIGURAÇÕES
+local tamanhoHitbox = Vector3.new(5, 5, 5) -- 5x maior que o normal
+local nomeParte = "HumanoidRootPart" -- parte que será aumentada
+local teamCheck = true -- ativar verificação de time
+
 local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "HitboxInterface"
+local Players = game:GetService("Players")
 
--- Cria a hitbox
-local hitbox = Instance.new("Frame", gui)
-hitbox.Name = "HITBOX_DREXZ"
-hitbox.Size = UDim2.new(0, 100, 0, 100) -- 10x10 (tamanho médio)
-hitbox.Position = UDim2.new(0.5, -50, 0.5, -50) -- centro da tela
-hitbox.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- vermelho
-hitbox.BackgroundTransparency = 0.5
-hitbox.BorderSizePixel = 2
-hitbox.Active = true
-hitbox.Draggable = true
+-- Função para aplicar hitbox maior
+local function aplicarHitbox(jogador)
+	if jogador ~= player then
+		local character = jogador.Character
+		if character and character:FindFirstChild(nomeParte) then
+			-- Team Check
+			if teamCheck and jogador.Team == player.Team then return end
 
--- Texto identificando a hitbox
-local label = Instance.new("TextLabel", hitbox)
-label.Size = UDim2.new(1, 0, 0, 20)
-label.Position = UDim2.new(0, 0, 0, -20)
-label.Text = "HITBOX DREXZ"
-label.BackgroundTransparency = 1
-label.TextColor3 = Color3.new(1, 1, 1)
-label.Font = Enum.Font.SourceSansBold
-label.TextSize = 14
+			local parte = character[nomeParte]
+			
+			-- Evita duplicar
+			if not parte:FindFirstChild("HitboxMod") then
+				-- Cria valor para marcar que já foi modificado
+				local tag = Instance.new("BoolValue", parte)
+				tag.Name = "HitboxMod"
 
--- Função para detectar se algum jogador está dentro da hitbox (simples)
-local function checkHit()
-	for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-		if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-			local root = otherPlayer.Character.HumanoidRootPart
-			local screenPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(root.Position)
+				-- Salva posição original
+				local originalSize = parte.Size
+				local originalTransparency = parte.Transparency
+				local originalColor = parte.Color
 
-			if onScreen then
-				local x, y = screenPos.X, screenPos.Y
-				local guiPos = hitbox.AbsolutePosition
-				local guiSize = hitbox.AbsoluteSize
+				-- Aumenta a parte
+				partea.Size = tamanhoHitbox
+				partea.Transparency = 0.7
+				partea.Color = Color3.fromRGB(255, 0, 0) -- vermelho para testes
+				partea.Material = Enum.Material.Neon
+				partea.CanCollide = false
 
-				if x >= guiPos.X and x <= guiPos.X + guiSize.X and
-				   y >= guiPos.Y and y <= guiPos.Y + guiSize.Y then
-					print("Jogador detectado na HITBOX DREXZ: " .. otherPlayer.Name)
+				-- Garante que vai seguir o personagem
+				local welds = parte:GetChildren()
+				for _, weld in ipairs(welds) do
+					if weld:IsA("Weld") or weld:IsA("Motor6D") then
+						weld.C1 = CFrame.new(0, 0, 0)
+					end
 				end
 			end
 		end
 	end
 end
 
--- Checa repetidamente a cada segundo
-while true do
-	checkHit()
-	wait(1)
+-- Loop para aplicar a cada personagem que entrar
+Players.PlayerAdded:Connect(function(jogador)
+	jogador.CharacterAdded:Connect(function()
+		wait(1)
+		aplicarHitbox(jogador)
+	end)
+end)
+
+-- Aplica nos que já estão no jogo
+for _, jogador in pairs(Players:GetPlayers()) do
+	if jogador.Character then
+		aplicarHitbox(jogador)
+	end
+	jogador.CharacterAdded:Connect(function()
+		wait(1)
+		aplicarHitbox(jogador)
+	end)
 end
