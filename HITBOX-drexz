@@ -1,0 +1,91 @@
+--// HITBOX MÉDIO (5x) COM INTERFACE MÓVEL
+--// Apenas para testes autorizados
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Criar GUI
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+ScreenGui.Name = "HitboxGui"
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 200, 0, 60)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.Active = true
+Frame.Draggable = true
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0.5, 0)
+Title.Text = "HITBOX TEST"
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+
+local Toggle = Instance.new("TextButton", Frame)
+Toggle.Size = UDim2.new(1, 0, 0.5, 0)
+Toggle.Position = UDim2.new(0, 0, 0.5, 0)
+Toggle.Text = "Ativar Hitbox"
+Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+Toggle.Font = Enum.Font.SourceSansBold
+Toggle.TextSize = 18
+
+-- Variáveis
+local HitboxAtivo = false
+local TamanhoHitbox = Vector3.new(5, 5, 5) -- Tamanho médio
+
+-- Função para aplicar hitbox em outros jogadores
+local function AplicarHitbox(jogador)
+    if jogador == LocalPlayer then return end
+    jogador.CharacterAdded:Connect(function(char)
+        wait(1)
+        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+        if hrp and HitboxAtivo then
+            hrp.Size = TamanhoHitbox
+            hrp.Transparency = 0.7
+            hrp.BrickColor = BrickColor.new("Really red")
+            hrp.Material = Enum.Material.ForceField
+            hrp.CanCollide = false
+        end
+    end)
+end
+
+-- Ativar/desativar função
+local function AlternarHitbox()
+    HitboxAtivo = not HitboxAtivo
+    Toggle.Text = HitboxAtivo and "Desativar Hitbox" or "Ativar Hitbox"
+    Toggle.BackgroundColor3 = HitboxAtivo and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(50, 50, 50)
+
+    for _, jogador in pairs(Players:GetPlayers()) do
+        if jogador ~= LocalPlayer and jogador.Character then
+            local hrp = jogador.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if HitboxAtivo then
+                    hrp.Size = TamanhoHitbox
+                    hrp.Transparency = 0.7
+                    hrp.BrickColor = BrickColor.new("Really red")
+                    hrp.Material = Enum.Material.ForceField
+                    hrp.CanCollide = false
+                else
+                    hrp.Size = Vector3.new(2, 2, 1) -- Tamanho padrão
+                    hrp.Transparency = 1
+                    hrp.Material = Enum.Material.Plastic
+                end
+            end
+        end
+    end
+end
+
+-- Conectar botão
+Toggle.MouseButton1Click:Connect(AlternarHitbox)
+
+-- Aplicar aos jogadores atuais
+for _, plr in pairs(Players:GetPlayers()) do
+    AplicarHitbox(plr)
+end
+
+-- Aplicar aos novos jogadores
+Players.PlayerAdded:Connect(AplicarHitbox)
